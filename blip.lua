@@ -9,6 +9,62 @@ local item_value = os.getenv('item_value')
 local downloaded = {}
 local addedtolist = {}
 
+-- Do not download folowing urls:
+downloaded["http://a.blip.tv/api.swf"] = true
+downloaded["http://a.blip.tv/"] = true
+downloaded["http://a.blip.tv/skin/smooth/compiled/modal.2d4f867.css"] = true
+downloaded["http://a.blip.tv/images/blank.gif"] = true
+downloaded["http://a.blip.tv/scripts/BLIP/DestinationEpisode.2d4f867.js"] = true
+downloaded["http://a.blip.tv/scripts/BLIP/DestinationCommon.2d4f867.js"] = true
+downloaded["http://a.blip.tv/scripts/BLIP/DestinationAnalytics.2d4f867.js"] = true
+downloaded["http://a.blip.tv/channel.html"] = true
+downloaded["http://a.blip.tv/images/apple-touch-icon-iphone4.png"] = true
+downloaded["http://a.blip.tv/images/apple-touch-icon-ipad.png"] = true
+downloaded["http://a.blip.tv/images/apple-touch-icon-iphone.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/endcap.2d4f867.css"] = true
+downloaded["http://a.blip.tv/skin/smooth/episodePage.2d4f867.css"] = true
+downloaded["http://a.blip.tv/skin/smooth/common.2d4f867.css"] = true
+downloaded["http://a.blip.tv/p/blip-player.eb25d35.js"] = true
+downloaded["http://a.blip.tv/scripts/flash/stratos.swf"] = true
+downloaded["http://a.blip.tv/skin/smooth/standardEndCap.2d4f867.css"] = true
+downloaded["http://a.blip.tv/p/blip-player.eb25d35.css"] = true
+downloaded["http://a.blip.tv/skin/mercury/dashboard/images/dashboard.loading.gif"] = true
+downloaded["http://a.blip.tv/skin/mercury/dashboard/images/modal.bg.alpha30.png"] = true
+downloaded["http://a.blip.tv/skin/mercury/dashboard/images/modal.bg.alpha50.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/endcap-bg.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/endcap-sidebar-shadow.png"] = true
+downloaded["https://fonts.googleapis.com/css?family=PT+Sans:400,700"] = true
+downloaded["http://a.blip.tv/skin/smooth/dark_background_stripes.gif"] = true
+downloaded["http://a.blip.tv/skin/smooth/fonts/BlipIcons-Roman.eot?"] = true
+downloaded["http://a.blip.tv/skin/smooth/fonts/BlipIcons-Roman.woff"] = true
+downloaded["http://a.blip.tv/skin/smooth/fonts/BlipIcons-Roman.ttf"] = true
+downloaded["http://a.blip.tv/skin/smooth/fonts/BlipIcons-Roman.svg"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/icons-sprite.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/masthead/sprite.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/masthead/sprite.svg"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/masthead/tpc-nav-imagery-sm.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/masthead/tpc-nav-imagery-lg.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/iphone-user-action-sprite.gif"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/icon-search.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/masthead/tpc-logo-small-combined.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/masthead/tpc-logo-small.svg"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/background-facebook-masthead.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/actionTabBackground.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/actionTabBackground@2x.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/scrollbar-bg.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/scrollbar-handle-bg.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/icon-close-x.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/icon-blip-42px.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/icon-fb-connect-large.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/icon-fb-connect-large-invert.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/button-show-links-bg.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/noresult.card.bg.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/private.lock.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/private.key.png"] = true
+downloaded["http://a.blip.tv/skin/smooth/images/blip-logo-smallscreen@2x.png"] = true
+downloaded["https://fonts.gstatic.com/s/ptsans/v8/FUDHvzEKSJww3kCxuiAo2A.ttf"] = true
+downloaded["https://fonts.gstatic.com/s/ptsans/v8/0XxGQsSc1g4rdRdjJKZrNC3USBnSvpkopQaUR-2r7iU.ttf"] = true
+
 read_file = function(file)
   if file then
     local f = assert(io.open(file))
@@ -17,6 +73,16 @@ read_file = function(file)
     return data
   else
     return ""
+  end
+end
+
+line_num = function(linenum, filename)
+  local num = 0
+  for line in io.lines(filename) do
+    num = num + 1
+    if num == linenum then
+      return line
+    end
   end
 end
 
@@ -29,7 +95,7 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
   end
   
   if (downloaded[url] ~= true or addedtolist[url] ~= true) then
-    if html == 0 or (string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]")) then
+    if html == 0 or string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]") then
       addedtolist[url] = true
       return true
     else
@@ -45,16 +111,14 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local urls = {}
   local html = nil
   
-  local function check(url, origurl)
-    if (downloaded[url] ~= true and addedtolist[url] ~= true) and not (string.match(url, "accounts%.google%.com") or string.match(url, "google%.com/accounts/") or string.match(url, "loginredirect%?") or ((item_type == "labelen" or item_type == "labelfr" or item_type == "labelru" or item_type == "useren" or item_type == "userfr" or item_type == "userru") and string.match(url, "/thread%?tid="))) then
-      if string.match(url, "&amp;") then
+  local function check(url)
+    if (string.match(url, "[^0-9]"..item_value) or string.match(url, "images%.blip%.tv") or string.match(url, "blip%.tv/play/") or string.match(url, "i%.blip%.tv") or string.match(url, "a%.blip%.tv")) and (downloaded[url] ~= true and addedtolist[url] ~= true) and not (string.match(url, "tumblr%.com") or string.match(url, "twitter%.com") or string.match(url, "[^0-9]"..item_value.."[0-9]") or string.match(url, "%.mp4") or string.match(url, "%.m4v") or string.match(url, ">") or string.match(url, "<")) then
+      if string.match(url, "THUMB_WIDTH") and string.match(url, "THUMB_HEIGHT") then
+        check(string.gsub(string.gsub(url, "THUMB_WIDTH", "40"), "THUMB_HEIGHT", "36"))
+      elseif string.match(url, "&amp;") then
         table.insert(urls, { url=string.gsub(url, "&amp;", "&") })
         addedtolist[url] = true
         addedtolist[string.gsub(url, "&amp;", "&")] = true
-      elseif string.match(url, "//") then
-        table.insert(urls, { url=string.gsub(url, "//", "/") })
-        addedtolist[url] = true
-        check(string.gsub(url, "//", "/"))
       else
         table.insert(urls, { url=url })
         addedtolist[url] = true
@@ -62,20 +126,42 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
   end
   
-  if string.match(url, item_value) then
+  if string.match(url, item_value) or string.match(url, "blip%.tv/play/") or string.match(url, "blip%.tv/file/get/") then
     html = read_file(file)
-    for newurl in string.gmatch(html, '"(https?://[^"]+)"') do
-      if string.match(newurl, item_value) then
-        check(newurl)
+    if string.match(url, "blip%.tv/players/standard%?no_wrap=") then
+      check("http://a.blip.tv/scripts/flash/stratos.swf?file=http://blip.tv/rss/flash/"..item_value.."&autostart="..string.match(html, "config%.autoplay%s+=%s+([a-z]+)").."&showinfo=false&onsite=true&nopostroll=true&noendcap=true&showsharebutton=false&removebrandlink=false&page=episode&skin=BlipClassic&frontcolor=0x999999&lightcolor=0xAAAAAA&basecolor=0x1E1E1E&backcolor=0x1E1E1E&floatcontrols=true&fixedcontrols=true&largeplaybutton=true&controlsalpha=.8&autohideidle=6000&utm_campaign=&adprovider=auditude&zoneid=127323&referrer=http%3A%2F%2Fblip.tv&destinationtag=blip_tv")
+    end
+    for newurl in string.gmatch(html, 'url="(https?://[^"]+)" blip:role="Source"') do
+      if downloaded[newurl] ~= true and addedtolist[newurl] ~= true then
+        table.insert(urls, { url=newurl })
+        addedtolist[newurl] = true
       end
+    end
+    if string.match(url, "showplayer=2014093037100220150422135039") then
+      local newurl = string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.match(html, "=(.-)\n"), "%%3A", ":"), "%%2F", "/"), "%%3F", "?"), "%%3D", "="), "%%26", "&")
+      if downloaded[newurl] ~= true and addedtolist[newurl] ~= true then
+        table.insert(urls, { url=newurl })
+        addedtolist[newurl] = true
+      end
+    end
+    for newurl in string.gmatch(html, 'url="(https?://[^"]+)" blip:role="Blip SD"') do
+      local num = 0
+      while num < 101 do
+        if downloaded[newurl.."?showplayer=2014093037100220150422135039&referrer=http://blip.tv&mask="..num.."&skin=flashvars&view=url"] ~= true and addedtolist[newurl.."?showplayer=2014093037100220150422135039&referrer=http://blip.tv&mask="..num.."&skin=flashvars&view=url"] ~= true then
+          table.insert(urls, { url=newurl.."?showplayer=2014093037100220150422135039&referrer=http://blip.tv&mask="..num.."&skin=flashvars&view=url" })
+          addedtolist[newurl.."?showplayer=2014093037100220150422135039&referrer=http://blip.tv&mask="..num.."&skin=flashvars&view=url"] = true
+        end
+        num = num + 1
+      end
+    end
+    for newurl in string.gmatch(html, '"(https?://[^"]+)"') do
+      check(newurl)
     end
     for newurl in string.gmatch(html, "'(https?://[^']+)'") do
-      if string.match(newurl, item_value) then
-        check(newurl)
-      end
+      check(newurl)
     end
-    for newurl in string.gmatch(html, '>(https?://[^<]+)<') do
-      if string.match(newurl, item_value) then
+    if string.match(url, "/rss/flash/") then
+      for newurl in string.gmatch(html, '>(https?://[^<]+)<') do
         check(newurl)
       end
     end
@@ -83,7 +169,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       if string.match(newurl, '"//') then
         check(string.gsub(newurl, '"//', 'http://'))
       else
-        check(string.match(url, "(https?://[^/]+)/")..string.match(newurl, '"(.+)'))
+        check(string.match(url, '(https?://[^/]+)/')..string.match(newurl, '"(.+)'))
       end
     end
     for newurl in string.gmatch(html, "('/[^']+)'") do
@@ -116,7 +202,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
       downloaded[url.url] = true
     end
   end
-  
+
   if status_code >= 500 or
     (status_code >= 400 and status_code ~= 404) then
 
