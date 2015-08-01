@@ -57,7 +57,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20150724.01"
+VERSION = "20150801.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'blip'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -173,12 +173,13 @@ class WgetArgs(object):
             "--truncate-output",
             "-e", "robots=off",
             "--rotate-dns",
+            "--no-cookies",
             "--recursive", "--level=inf",
             "--no-parent",
             "--page-requisites",
             "--timeout", "30",
             "--tries", "inf",
-            "--domains", "google.com",
+            "--domains", "blip.tv",
             "--span-hosts",
             "--waitretry", "30",
             "--warc-file", ItemInterpolation("%(item_dir)s/%(warc_file_base)s"),
@@ -233,7 +234,7 @@ pipeline = Pipeline(
     WgetDownload(
         WgetArgs(),
         max_tries=2,
-        accept_on_exit_code=[0, 4, 8],
+        accept_on_exit_code=[0, 8],
         env={
             "item_dir": ItemValue("item_dir"),
             "item_value": ItemValue("item_value"),
