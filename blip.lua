@@ -9,6 +9,8 @@ local item_value = os.getenv('item_value')
 local downloaded = {}
 local addedtolist = {}
 
+local removed = false
+
 -- Do not download folowing urls:
 downloaded["http://a.blip.tv/api.swf"] = true
 downloaded["http://a.blip.tv/"] = true
@@ -76,16 +78,6 @@ read_file = function(file)
   end
 end
 
-line_num = function(linenum, filename)
-  local num = 0
-  for line in io.lines(filename) do
-    num = num + 1
-    if num == linenum then
-      return line
-    end
-  end
-end
-
 wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_parsed, iri, verdict, reason)
   local url = urlpos["url"]["url"]
   local html = urlpos["link_expect_html"]
@@ -132,6 +124,12 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       check("http://a.blip.tv/scripts/flash/stratos.swf?file=http://blip.tv/rss/flash/"..item_value.."&autostart="..string.match(html, "config%.autoplay%s+=%s+([a-z]+)").."&showinfo=false&onsite=true&nopostroll=true&noendcap=true&showsharebutton=false&removebrandlink=false&page=episode&skin=BlipClassic&frontcolor=0x999999&lightcolor=0xAAAAAA&basecolor=0x1E1E1E&backcolor=0x1E1E1E&floatcontrols=true&fixedcontrols=true&largeplaybutton=true&controlsalpha=.8&autohideidle=6000&utm_campaign=&adprovider=auditude&zoneid=127323&referrer=http%3A%2F%2Fblip.tv&destinationtag=blip_tv")
     end
     for newurl in string.gmatch(html, 'url="(https?://[^"]+)" blip:role="Source"') do
+      if downloaded[newurl] ~= true and addedtolist[newurl] ~= true then
+        table.insert(urls, { url=newurl })
+        addedtolist[newurl] = true
+      end
+    end
+    for newurl in string.gmatch(html, 'url="(https?://[^"]+)" blip:role="source"') do
       if downloaded[newurl] ~= true and addedtolist[newurl] ~= true then
         table.insert(urls, { url=newurl })
         addedtolist[newurl] = true
@@ -203,7 +201,13 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     end
   end
 
-  if status_code >= 500 or
+  if string.match(url["url"], "http://blip%.tv/removed") then
+    removed = true
+  end
+
+  if removed == true and status_code == 410 then
+    return wget.actions.NOTHING
+  elseif status_code >= 500 or
     (status_code >= 400 and status_code ~= 404) then
 
     io.stdout:write("\nServer returned "..http_stat.statcode..". Sleeping.\n")
