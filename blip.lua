@@ -8,6 +8,7 @@ local item_value = os.getenv('item_value')
 
 local downloaded = {}
 local addedtolist = {}
+local removedlist = {}
 
 local removed = false
 
@@ -137,7 +138,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
     if string.match(url, "showplayer=2014093037100220150422135039") then
       local newurl = string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.match(html, "=(.-)\n"), "%%3A", ":"), "%%2F", "/"), "%%3F", "?"), "%%3D", "="), "%%26", "&")
-      if downloaded[newurl] ~= true and addedtolist[newurl] ~= true then
+      if downloaded[newurl] ~= true and addedtolist[newurl] ~= true and removedlist[url] ~= true then
         table.insert(urls, { url=newurl })
         addedtolist[newurl] = true
       end
@@ -206,7 +207,8 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   end
 
   if removed == true and status_code == 410 then
-    return wget.actions.EXIT
+    removedlist[url["url"]] = true
+    return wget.actions.NOTHING
   elseif status_code >= 500 or
     (status_code >= 400 and status_code ~= 404) then
 
