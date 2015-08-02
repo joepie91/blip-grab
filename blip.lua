@@ -206,7 +206,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   end
 
   if removed == true and status_code == 410 then
-    return wget.actions.NOTHING
+    return wget.actions.EXIT
   elseif status_code >= 500 or
     (status_code >= 400 and status_code ~= 404) then
 
