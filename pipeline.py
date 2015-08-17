@@ -57,7 +57,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20150802.02"
+VERSION = "20150817.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'blip'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -195,10 +195,12 @@ class WgetArgs(object):
         item['item_type'] = item_type
         item['item_value'] = item_value
         
-        assert item_type in ('video')
+        assert item_type in ('video', 'show')
         
         if item_type == 'video':
             wget_args.append('http://blip.tv/rss/flash/{0}'.format(item_value))
+        elif item_type == 'show':
+            wget_args.append('http://blip.tv/show/{0}'.format(item_value))
         else:
             raise Exception('Unknown item')
         
