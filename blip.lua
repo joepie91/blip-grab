@@ -11,6 +11,8 @@ local addedtolist = {}
 local removedlist = {}
 
 local removed = false
+local showname = nil
+local lastpage = nil
 
 -- Do not download folowing urls:
 downloaded["http://a.blip.tv/api.swf"] = true
@@ -88,7 +90,7 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
   end
   
   if (downloaded[url] ~= true or addedtolist[url] ~= true) then
-    if html == 0 or string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]") then
+    if html == 0 or (string.match(url, "[^0-9]"..item_value) and not string.match(url, "[^0-9]"..item_value.."[0-9]")) or (item_type == 'show' and (string.match(url, "blip%.tv/([^/]+)") == showname or string.match(url, "[^a-z0-9]"..item_value))) then
       addedtolist[url] = true
       return true
     else
@@ -105,7 +107,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local html = nil
   
   local function check(url)
-    if (string.match(url, "[^0-9]"..item_value) or string.match(url, "images%.blip%.tv") or string.match(url, "blip%.tv/play/") or string.match(url, "i%.blip%.tv") or string.match(url, "a%.blip%.tv")) and (downloaded[url] ~= true and addedtolist[url] ~= true) and not (string.match(url, "tumblr%.com") or string.match(url, "twitter%.com") or string.match(url, "[^0-9]"..item_value.."[0-9]") or string.match(url, "%.mp4") or string.match(url, "%.m4v") or string.match(url, ">") or string.match(url, "<")) then
+    if ((string.match(url, "[^0-9]"..item_value) or string.match(url, "images%.blip%.tv") or string.match(url, "blip%.tv/play/") or string.match(url, "i%.blip%.tv") or string.match(url, "a%.blip%.tv")) and (downloaded[url] ~= true and addedtolist[url] ~= true) and not (string.match(url, "tumblr%.com") or string.match(url, "twitter%.com") or string.match(url, "[^0-9]"..item_value.."[0-9]") or string.match(url, "%.mp4") or string.match(url, "%.m4v") or string.match(url, ">") or string.match(url, "<"))) or (item_type == 'show' and ((string.match(url, "[^a-z0-9]"..item_value) or string.match(url, "blip%.tv/([^/]+)") == showname or string.match(url, "images%.blip%.tv") or string.match(url, "blip%.tv/play/") or string.match(url, "i%.blip%.tv") or string.match(url, "a%.blip%.tv")) and (downloaded[url] ~= true and addedtolist[url] ~= true) and not ((string.match(url, "blip%.tv/([^/]+)") == showname and string.match(url, "blip%.tv/[^/]+/.+%-[0-9]+")) or string.match(url, "tumblr%.com") or string.match(url, "twitter%.com") or string.match(url, ">") or string.match(url, "<")))) then
       if string.match(url, "THUMB_WIDTH") and string.match(url, "THUMB_HEIGHT") then
         check(string.gsub(string.gsub(url, "THUMB_WIDTH", "40"), "THUMB_HEIGHT", "36"))
       elseif string.match(url, "&amp;") then
@@ -118,8 +120,59 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       end
     end
   end
+
+  if item_type == 'show' and showname == nil and not string.match(url, "https?://blip%.tv/[^/]+/") then
+    showname = string.match(url, "https?://blip%.tv/(.+)")
+  end
+
+  if item_type == 'show' and (string.match(url, item_value) or string.match(url, "blip%.tv/([^/]+)") == showname) then
+    html = read_file(file)
+    if showname == nil then
+      showname = string.match(html, '"og:title"%s+content="([^"]+)"')
+    end
+    if string.match(url, "get_recommended_shows") then
+      local lpage = string.match(html, '"LastPage">([0-9]+)<') + 2
+      while lpage >= 0 do
+        check("http://blip.tv/show/get_recommended_shows?users_id="..item_value.."&no_wrap=1&esi=1&page="..lpage)
+        check("http://blip.tv/show/get_recommended_shows?users_id="..item_value.."&no_wrap=0&esi=1&page="..lpage)
+        check("http://blip.tv/show/get_recommended_shows?users_id="..item_value.."&no_wrap=1&esi=1&page="..lpage)
+        check("http://blip.tv/show/get_recommended_shows?users_id="..item_value.."&no_wrap=0&esi=1&page="..lpage)
+        lpage = lpage - 1
+      end
+    end
+    if (lastpage == nil and string.match(url, "blip%.tv/([^/]+)") == showname) or (string.match(url, "show_get_full_episode_list") and not string.match(url, "page=0")) then
+      lastpage = string.match(html, '"LastPage">([0-9]+)<') + 2
+      while lastpage >= 0 do
+        check("http://blip.tv/pr/show_get_full_episode_list?users_id="..item_value.."&lite=0&esi=1&page="..lastpage)
+        check("http://blip.tv/pr/show_get_full_episode_list?users_id="..item_value.."&lite=1&esi=1&page="..lastpage)
+        check("http://blip.tv/pr/show_get_full_episode_list?users_id="..item_value.."&lite=0&esi=0&page="..lastpage)
+        check("http://blip.tv/pr/show_get_full_episode_list?users_id="..item_value.."&lite=1&esi=0&page="..lastpage)
+        lastpage = lastpage - 1
+      end
+    end
+    for newurl in string.gmatch(html, '"(https?://[^"]+)"') do
+      check(newurl)
+    end
+    for newurl in string.gmatch(html, "'(https?://[^']+)'") do
+      check(newurl)
+    end
+    for newurl in string.gmatch(html, '("/[^"]+)"') do
+      if string.match(newurl, '"//') then
+        check(string.gsub(newurl, '"//', 'http://'))
+      else
+        check(string.match(url, '(https?://[^/]+)/')..string.match(newurl, '"(.+)'))
+      end
+    end
+    for newurl in string.gmatch(html, "('/[^']+)'") do
+      if string.match(newurl, "'//") then
+        check(string.gsub(newurl, "'//", "http://"))
+      else
+        check(string.match(url, "(https?://[^/]+)/")..string.match(newurl, "'(.+)"))
+      end
+    end
+  end
   
-  if string.match(url, item_value) or string.match(url, "blip%.tv/play/") or string.match(url, "blip%.tv/file/get/") then
+  if item_type == 'video' and (string.match(url, item_value) or string.match(url, "blip%.tv/play/") or string.match(url, "blip%.tv/file/get/")) then
     html = read_file(file)
     if string.match(url, "blip%.tv/players/standard%?no_wrap=") then
       check("http://a.blip.tv/scripts/flash/stratos.swf?file=http://blip.tv/rss/flash/"..item_value.."&autostart="..string.match(html, "config%.autoplay%s+=%s+([a-z]+)").."&showinfo=false&onsite=true&nopostroll=true&noendcap=true&showsharebutton=false&removebrandlink=false&page=episode&skin=BlipClassic&frontcolor=0x999999&lightcolor=0xAAAAAA&basecolor=0x1E1E1E&backcolor=0x1E1E1E&floatcontrols=true&fixedcontrols=true&largeplaybutton=true&controlsalpha=.8&autohideidle=6000&utm_campaign=&adprovider=auditude&zoneid=127323&referrer=http%3A%2F%2Fblip.tv&destinationtag=blip_tv")
