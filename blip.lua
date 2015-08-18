@@ -172,7 +172,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
   end
   
-  if item_type == 'video' and (string.match(url, item_value) or string.match(url, "blip%.tv/play/") or string.match(url, "blip%.tv/file/get/")) then
+  if item_type == 'video' and (string.match(url, item_value) or string.match(url, "blip%.tv/play/") or string.match(url, "blip%.tv/file/get/")) and not string.match(url, "^http://a%.blip%.tv/scripts/flash/stratos%.swf") then
     html = read_file(file)
     if string.match(url, "blip%.tv/players/standard%?no_wrap=") then
       check("http://a.blip.tv/scripts/flash/stratos.swf?file=http://blip.tv/rss/flash/"..item_value.."&autostart="..string.match(html, "config%.autoplay%s+=%s+([a-z]+)").."&showinfo=false&onsite=true&nopostroll=true&noendcap=true&showsharebutton=false&removebrandlink=false&page=episode&skin=BlipClassic&frontcolor=0x999999&lightcolor=0xAAAAAA&basecolor=0x1E1E1E&backcolor=0x1E1E1E&floatcontrols=true&fixedcontrols=true&largeplaybutton=true&controlsalpha=.8&autohideidle=6000&utm_campaign=&adprovider=auditude&zoneid=127323&referrer=http%3A%2F%2Fblip.tv&destinationtag=blip_tv")
