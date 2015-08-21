@@ -272,11 +272,15 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
 
     tries = tries + 1
 
-    if tries >= 15 then
+    if tries >= 5 then
       io.stdout:write("\nI give up...\n")
       io.stdout:flush()
       tries = 0
-      return wget.actions.ABORT
+      if item_type == 'video' then
+        return wget.actions.EXIT
+      else
+        return wget.actions.ABORT
+      end
     else
       return wget.actions.CONTINUE
     end
@@ -289,11 +293,15 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     
     tries = tries + 1
 
-    if tries >= 10 then
+    if tries >= 5 then
       io.stdout:write("\nI give up...\n")
       io.stdout:flush()
       tries = 0
-      return wget.actions.ABORT
+      if item_type == 'video' then
+        return wget.actions.EXIT
+      else
+        return wget.actions.ABORT
+      end
     else
       return wget.actions.CONTINUE
     end
